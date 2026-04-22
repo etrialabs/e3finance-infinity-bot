@@ -8,7 +8,7 @@
 set -e  # para si algo falla
 
 REPO_URL="https://github.com/etrialabs/e3Argos.git"
-BRANCH="gh-pages"         # cambia a "main" si GitHub Pages sirve desde main
+BRANCH="main"
 MSG="${1:-deploy $(date '+%Y-%m-%d %H:%M')}"
 
 echo "▶ Subiendo dashboard a GitHub Pages..."
