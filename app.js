@@ -356,7 +356,9 @@ function renderKPIs(clientUnrealizedPnl) {
   const latest = rows.length ? rows[rows.length - 1] : null;
   const cap    = cfg.capitalUsd || 10000;
 
-  const realPnl = parseFloat(latest?.realized_pnl_usd || 0);
+  const realPnlRaw   = parseFloat(latest?.realized_pnl_usd || 0);
+  const realPnlAtT0  = parseFloat(state.benchmarkConfig?.realized_pnl_at_t0 || 0);
+  const realPnl      = realPnlRaw - realPnlAtT0;
   const unrPnl  = (clientUnrealizedPnl !== undefined) ? clientUnrealizedPnl : parseFloat(latest?.unrealized_pnl_usd || 0);
   const totalPnl = realPnl + unrPnl;
   const portfolio = cap + totalPnl;
@@ -527,8 +529,10 @@ function renderPerformance() {
     return;
   }
 
-  // Total rentabilidad % (vs capital inicial)
-  const realPnl  = parseFloat(latest.realized_pnl_usd || 0);
+  // Total rentabilidad % (vs capital inicial) — realPnl ajustado desde t_0
+  const realPnlRaw2  = parseFloat(latest.realized_pnl_usd || 0);
+  const realPnlAtT02 = parseFloat(state.benchmarkConfig?.realized_pnl_at_t0 || 0);
+  const realPnl      = realPnlRaw2 - realPnlAtT02;
   const unrPnl   = (state.clientUnrealizedPnl !== undefined) ? state.clientUnrealizedPnl : parseFloat(latest.unrealized_pnl_usd || 0);
   const totalPnl = realPnl + unrPnl;
   const totalPct = cap > 0 ? (totalPnl / cap) * 100 : 0;
