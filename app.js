@@ -484,13 +484,26 @@ function renderPerformance() {
     return;
   }
 
-  // ── Si hay datos BENCHMARK, úsalos para performance (limpios, sin btcT0Price hacks) ──
+  // ── Si hay datos BENCHMARK, calcular returns live desde capital_0/btc_0 ──
+  // (no usar argos_return_pct del tab — solo es preciso en el instante del ciclo horario)
   const bmRows = state.benchmarkRows || [];
   if (bmRows.length > 0) {
-    const bmLast   = bmRows[bmRows.length - 1];
-    const argosRet = parseFloat(bmLast.argos_return_pct || 0);
-    const btcRet   = parseFloat(bmLast.btc_return_pct   || 0);
-    const alphaVal = parseFloat(bmLast.alpha_pp          || 0);
+    const bmLast = bmRows[bmRows.length - 1];
+
+    // Return live Argos: equity actual vs capital_0
+    const capital0     = parseFloat(state.benchmarkConfig?.capital_0 || 0);
+    const btc0         = parseFloat(state.benchmarkConfig?.btc_0 || 0);
+    const realPnlRawL  = parseFloat(latest.realized_pnl_usd || 0);
+    const realPnlAtT0L = parseFloat(state.benchmarkConfig?.realized_pnl_at_t0 || 0);
+    const realPnlL     = realPnlRawL - realPnlAtT0L;
+    const unrPnlL      = (state.clientUnrealizedPnl !== undefined) ? state.clientUnrealizedPnl : parseFloat(latest.unrealized_pnl_usd || 0);
+    const equityLive   = cap + realPnlL + unrPnlL;
+    const argosRet     = capital0 > 0 ? (equityLive / capital0 - 1) * 100 : parseFloat(bmLast.argos_return_pct || 0);
+
+    // Return live BTC hold: precio actual vs btc_0
+    const btcNow = livePrices['BTCUSDT']?.price || parseFloat(latest.btc_price || 0);
+    const btcRet = btc0 > 0 && btcNow > 0 ? (btcNow / btc0 - 1) * 100 : parseFloat(bmLast.btc_return_pct || 0);
+    const alphaVal = argosRet - btcRet;
 
     totalEl.textContent = fmtPct(argosRet, true);
     totalEl.className   = 'perf-big ' + clsFor(argosRet);
