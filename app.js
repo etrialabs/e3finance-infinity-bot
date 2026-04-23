@@ -359,15 +359,19 @@ function renderKPIs(clientUnrealizedPnl) {
   const realPnlRaw   = parseFloat(latest?.realized_pnl_usd || 0);
   const realPnlAtT0  = parseFloat(state.benchmarkConfig?.realized_pnl_at_t0 || 0);
   const realPnl      = realPnlRaw - realPnlAtT0;
-  const unrPnl  = (clientUnrealizedPnl !== undefined) ? clientUnrealizedPnl : parseFloat(latest?.unrealized_pnl_usd || 0);
-  const totalPnl = realPnl + unrPnl;
 
   // Capital Total: BENCHMARK es la fuente canónica (el cálculo con cfg.capitalUsd produce valores heredados incorrectos)
   const bmLastKpi   = state.benchmarkRows?.length ? state.benchmarkRows[state.benchmarkRows.length - 1] : null;
   const capital0Kpi = parseFloat(state.benchmarkConfig?.capital_0 || 0);
   const bm_equity   = bmLastKpi ? parseFloat(bmLastKpi.argos_equity || 0) : 0;
-  const portfolio   = (bm_equity > 0 && capital0Kpi > 0) ? bm_equity : cap + totalPnl;
-  const portDelta   = capital0Kpi > 0 ? portfolio - capital0Kpi : totalPnl;
+  const portfolio   = (bm_equity > 0 && capital0Kpi > 0) ? bm_equity : cap + (realPnl + (clientUnrealizedPnl ?? 0));
+  const portDelta   = capital0Kpi > 0 ? portfolio - capital0Kpi : realPnl + (clientUnrealizedPnl ?? 0);
+
+  // No Realizado: derivar del portDelta cuando hay BENCHMARK (clientUnrealizedPnl es incompleto — solo captura posiciones abiertas actuales)
+  const unrPnl   = (bm_equity > 0 && capital0Kpi > 0) ? portDelta - realPnl
+                 : (clientUnrealizedPnl !== undefined)  ? clientUnrealizedPnl
+                 : parseFloat(latest?.unrealized_pnl_usd || 0);
+  const totalPnl = realPnl + unrPnl;
 
   // Hero portfolio
   document.getElementById('kpi-portfolio').textContent = fmtMoney(portfolio);
