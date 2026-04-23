@@ -111,6 +111,20 @@
     min-width: 0 !important;
     align-self: stretch !important;
   }
+  /* ── MOBILE: flex-basis:0 colapsa height en columna → forzar auto ── */
+  @media (max-width: 640px) {
+    .card-hero {
+      flex: 1 1 auto !important;
+    }
+    #kpi-regime-card {
+      flex: 1 1 auto !important;
+      width: 100% !important;
+    }
+    .card-regime {
+      height: auto !important;
+      grid-template-rows: auto auto !important;
+    }
+  }
   /* ══ CARD-REGIME: ocupa 100% del alto del flex row ══ */
   .card-regime {
     display: grid !important;
