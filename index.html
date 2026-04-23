@@ -326,31 +326,76 @@
     .hero-grid {
       flex-direction: column !important;
     }
-    /* card-hero: colapsa a 1 columna */
+
+    /* ── card-hero: 2 columnas asimétricas (valor + return/alpha) ── */
     .card-hero {
-      grid-template-columns: 1fr !important;
-      padding: 1.1rem 1rem !important;
+      grid-template-columns: 3fr 2fr !important;
+      padding: 1.1rem 1rem 0.9rem !important;
+      row-gap: 0.2rem !important;
+      column-gap: 0.5rem !important;
     }
-    /* Alineación izquierda en móvil — quita bordes y padding lateral */
-    .card-hero .ch-c,
-    .card-hero .ch-r {
-      text-align: left !important;
+
+    /* Fila 1 → Solo eyebrow Portfolio (span completo); ocultar Rentabilidad y Alfa */
+    .card-hero > :nth-child(1) {          /* eyebrow Portfolio */
+      grid-column: 1 / -1 !important;
+      grid-row: 1 !important;
+    }
+    .card-hero > :nth-child(2),           /* eyebrow Rentabilidad — oculto */
+    .card-hero > :nth-child(3) {          /* eyebrow Alfa vs BTC — oculto */
+      display: none !important;
+    }
+
+    /* Fila 2 → Valor portfolio (izq) | Return % (dcha, más pequeño) */
+    .card-hero > :nth-child(4) {          /* kpi-portfolio */
+      grid-column: 1 !important;
+      grid-row: 2 !important;
+      font-size: clamp(1.7rem, 7vw, 2.2rem) !important;
+      align-self: end !important;
+    }
+    .card-hero > :nth-child(5) {          /* perf-total-pct */
+      grid-column: 2 !important;
+      grid-row: 2 !important;
+      text-align: right !important;
       padding: 0 !important;
       border: none !important;
+      font-size: clamp(1.15rem, 5vw, 1.45rem) !important;
+      align-self: end !important;
+      line-height: 1 !important;
     }
-    .card-hero .perf-big {
-      text-align: left !important;
-    }
-    .card-hero .ch-c.ch-badge-row,
-    .card-hero .ch-r.ch-badge-row {
+
+    /* Fila 3 → Delta chip (izq) | Alpha % (dcha, pequeño) */
+    .card-hero > :nth-child(7) {          /* ch-l badge row: -X% chip + abs */
+      grid-column: 1 !important;
+      grid-row: 3 !important;
       justify-content: flex-start !important;
       flex-direction: row !important;
       align-items: center !important;
+      margin: 0 !important; padding: 0 !important;
     }
-    /* Deployed bar: ocupa columna completa */
-    .card-hero .ch-deployed {
+    .card-hero > :nth-child(6) {          /* perf-alpha-pct */
+      grid-column: 2 !important;
+      grid-row: 3 !important;
+      text-align: right !important;
+      padding: 0 !important;
+      border: none !important;
+      font-size: 0.85rem !important;
+      color: var(--e-muted) !important;
+      align-self: start !important;
+      line-height: 1.2 !important;
+      font-weight: 400 !important;
+    }
+    .card-hero > :nth-child(8),           /* ch-c badge row — oculto */
+    .card-hero > :nth-child(9) {          /* ch-r badge row — oculto */
+      display: none !important;
+    }
+
+    /* Deployed bar: span completo */
+    .card-hero > :nth-child(10) {         /* deployed-stack */
       grid-column: 1 / -1 !important;
+      grid-row: 4 !important;
+      margin-top: 0.5rem !important;
     }
+
     /* card-regime: ancho completo */
     #kpi-regime-card {
       flex: 1 1 auto !important;
