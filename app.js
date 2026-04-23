@@ -361,18 +361,25 @@ function renderKPIs(clientUnrealizedPnl) {
   const realPnl      = realPnlRaw - realPnlAtT0;
   const unrPnl  = (clientUnrealizedPnl !== undefined) ? clientUnrealizedPnl : parseFloat(latest?.unrealized_pnl_usd || 0);
   const totalPnl = realPnl + unrPnl;
-  const portfolio = cap + totalPnl;
+
+  // Capital Total: BENCHMARK es la fuente canónica (el cálculo con cfg.capitalUsd produce valores heredados incorrectos)
+  const bmLastKpi   = state.benchmarkRows?.length ? state.benchmarkRows[state.benchmarkRows.length - 1] : null;
+  const capital0Kpi = parseFloat(state.benchmarkConfig?.capital_0 || 0);
+  const bm_equity   = bmLastKpi ? parseFloat(bmLastKpi.argos_equity || 0) : 0;
+  const portfolio   = (bm_equity > 0 && capital0Kpi > 0) ? bm_equity : cap + totalPnl;
+  const portDelta   = capital0Kpi > 0 ? portfolio - capital0Kpi : totalPnl;
 
   // Hero portfolio
   document.getElementById('kpi-portfolio').textContent = fmtMoney(portfolio);
 
-  const portPct = cap > 0 ? (totalPnl / cap) * 100 : 0;
+  const portPct = capital0Kpi > 0 ? (portDelta / capital0Kpi) * 100
+                : cap > 0 ? (totalPnl / cap) * 100 : 0;
   const portChip = document.getElementById('kpi-portfolio-pct');
   portChip.textContent = latest ? fmtPct(portPct, true) : '—';
   portChip.className = 'delta-chip ' + clsFor(portPct);
 
   const portAbs = document.getElementById('kpi-portfolio-abs');
-  portAbs.textContent = latest ? (totalPnl >= 0 ? '+' : '') + fmtMoney(totalPnl) + ' total' : '—';
+  portAbs.textContent = latest ? (portDelta >= 0 ? '+' : '') + fmtMoney(portDelta) + ' total' : '—';
 
   // Deployed bar
   const allocated = parseFloat(latest?.capital_allocated_usd || 0);
@@ -490,15 +497,11 @@ function renderPerformance() {
   if (bmRows.length > 0) {
     const bmLast = bmRows[bmRows.length - 1];
 
-    // Return live Argos: equity actual vs capital_0
-    const capital0     = parseFloat(state.benchmarkConfig?.capital_0 || 0);
-    const btc0         = parseFloat(state.benchmarkConfig?.btc_0 || 0);
-    const realPnlRawL  = parseFloat(latest.realized_pnl_usd || 0);
-    const realPnlAtT0L = parseFloat(state.benchmarkConfig?.realized_pnl_at_t0 || 0);
-    const realPnlL     = realPnlRawL - realPnlAtT0L;
-    const unrPnlL      = (state.clientUnrealizedPnl !== undefined) ? state.clientUnrealizedPnl : parseFloat(latest.unrealized_pnl_usd || 0);
-    const equityLive   = cap + realPnlL + unrPnlL;
-    const argosRet     = capital0 > 0 ? (equityLive / capital0 - 1) * 100 : parseFloat(bmLast.argos_return_pct || 0);
+    // Return Argos: BENCHMARK es la fuente canónica
+    // El cálculo live (cap + realPnl + unrPnl) era erróneo: usaba cfg.capitalUsd en vez de capital_0
+    const capital0 = parseFloat(state.benchmarkConfig?.capital_0 || 0);
+    const btc0     = parseFloat(state.benchmarkConfig?.btc_0 || 0);
+    const argosRet = parseFloat(bmLast.argos_return_pct || 0);
 
     // Return live BTC hold: precio actual vs btc_0
     const btcNow = livePrices['BTCUSDT']?.price || parseFloat(latest.btc_price || 0);

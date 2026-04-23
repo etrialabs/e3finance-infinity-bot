@@ -305,6 +305,63 @@
     width: 316px !important;
     height: 316px !important;
   }
+
+  /* ══ MOBILE RESPONSIVE — !important overrides para breakpoints ══ */
+  @media (max-width: 640px) {
+    /* Hero grid: columna única */
+    .hero-grid {
+      flex-direction: column !important;
+    }
+    /* card-hero: colapsa a 1 columna */
+    .card-hero {
+      grid-template-columns: 1fr !important;
+      padding: 1.1rem 1rem !important;
+    }
+    /* Alineación izquierda en móvil — quita bordes y padding lateral */
+    .card-hero .ch-c,
+    .card-hero .ch-r {
+      text-align: left !important;
+      padding: 0 !important;
+      border: none !important;
+    }
+    .card-hero .perf-big {
+      text-align: left !important;
+    }
+    .card-hero .ch-c.ch-badge-row,
+    .card-hero .ch-r.ch-badge-row {
+      justify-content: flex-start !important;
+      flex-direction: row !important;
+      align-items: center !important;
+    }
+    /* Deployed bar: ocupa columna completa */
+    .card-hero .ch-deployed {
+      grid-column: 1 / -1 !important;
+    }
+    /* card-regime: ancho completo */
+    #kpi-regime-card {
+      flex: 1 1 auto !important;
+      width: 100% !important;
+    }
+    /* Graph grid: columna única */
+    .graph-grid {
+      grid-template-columns: 1fr !important;
+    }
+    /* Alpha card: evita overflow */
+    .alpha-inner {
+      flex-direction: column !important;
+      gap: 0.75rem !important;
+    }
+    .alpha-right {
+      flex-direction: row !important;
+      justify-content: flex-start !important;
+      gap: 1.25rem !important;
+    }
+    .alpha-divider {
+      width: 1px !important;
+      height: auto !important;
+      align-self: stretch !important;
+    }
+  }
 </style>
 </head>
 <body>
