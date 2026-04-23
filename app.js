@@ -434,10 +434,11 @@ function renderKPIs(clientUnrealizedPnl) {
   document.getElementById('kpi-tier-label').textContent = latest?.tier || '—';
   document.getElementById('kpi-positions').textContent = latest?.open_positions ?? '—';
 
-  // PnL split — usar capital0Kpi como base si disponible (coherente con portPct)
+  // PnL split — % calculados consistentemente para que Realiz. + No Realiz. = Total
+  // portPct ya es el total canónico; realPct se calcula igual; unrPct = portPct - realPct
   const pnlBase  = capital0Kpi > 0 ? capital0Kpi : cap;
   const realPct  = pnlBase > 0 ? (realPnl / pnlBase) * 100 : 0;
-  const unrPct   = pnlBase > 0 ? (unrPnl  / pnlBase) * 100 : 0;
+  const unrPct   = portPct - realPct;   // garantiza suma exacta siempre
 
   const pnlUnrPct = document.getElementById('kpi-pnl-unr-pct');
   pnlUnrPct.textContent = latest ? fmtPct(unrPct, true) : '—';
