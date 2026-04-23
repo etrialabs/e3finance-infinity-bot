@@ -510,11 +510,14 @@ function renderPerformance() {
   if (bmRows.length > 0) {
     const bmLast = bmRows[bmRows.length - 1];
 
-    // Return Argos: BENCHMARK es la fuente canónica
-    // El cálculo live (cap + realPnl + unrPnl) era erróneo: usaba cfg.capitalUsd en vez de capital_0
+    // Return Argos: usar portfolio LIVE (state.portfolioTotal incluye clientUnrealizedPnl)
+    // Fix 2026-04-23: argos_return_pct del tab solo se actualiza en ciclos horarios —
+    // usar portfolio live para que el % se mueva con precios en tiempo real.
     const capital0 = parseFloat(state.benchmarkConfig?.capital_0 || 0);
     const btc0     = parseFloat(state.benchmarkConfig?.btc_0 || 0);
-    const argosRet = parseFloat(bmLast.argos_return_pct || 0);
+    const argosRet = (capital0 > 0 && state.portfolioTotal > 0)
+      ? ((state.portfolioTotal / capital0) - 1) * 100
+      : parseFloat(bmLast.argos_return_pct || 0);
 
     // Return live BTC hold: precio actual vs btc_0
     const btcNow = livePrices['BTCUSDT']?.price || parseFloat(latest.btc_price || 0);
