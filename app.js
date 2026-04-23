@@ -364,17 +364,20 @@ function renderKPIs(clientUnrealizedPnl) {
   const bmLastKpi   = state.benchmarkRows?.length ? state.benchmarkRows[state.benchmarkRows.length - 1] : null;
   const capital0Kpi = parseFloat(state.benchmarkConfig?.capital_0 || 0);
   const bm_equity   = bmLastKpi ? parseFloat(bmLastKpi.argos_equity || 0) : 0;
-  const portfolio   = (bm_equity > 0 && capital0Kpi > 0) ? bm_equity : cap + (realPnl + (clientUnrealizedPnl ?? 0));
+  // Fix 2026-04-23: sumar clientUnrealizedPnl al bm_equity para actualizar portfolio
+  // con precios live entre ciclos (bm_equity = cost_basis; unr = mark-to-market delta)
+  const portfolio   = (bm_equity > 0 && capital0Kpi > 0) ? bm_equity + (clientUnrealizedPnl ?? 0) : cap + (realPnl + (clientUnrealizedPnl ?? 0));
   const portDelta   = capital0Kpi > 0 ? portfolio - capital0Kpi : realPnl + (clientUnrealizedPnl ?? 0);
 
-  // P&L total: BENCHMARK es canónico — portDelta ya es la diferencia real vs capital_0
-  // clientUnrealizedPnl es incompleto (solo posiciones abiertas live, no captura el total)
+  // Almacenar para donut y stubs M3/M4 (trend 55% + spot_grid 10% = 65% en RISK_ON 10k)
+  state.portfolioTotal = portfolio;
+  state.totalCapital   = portfolio > 0 ? portfolio / 0.65 : (cfg.capitalUsd || 10000);
+
+  // P&L total: BENCHMARK + unrealized live
   const clientUnr = clientUnrealizedPnl !== undefined
     ? clientUnrealizedPnl
     : parseFloat(latest?.unrealized_pnl_usd || 0);
-  const totalPnl = (portfolio === bm_equity && capital0Kpi > 0)
-    ? portDelta
-    : realPnl + clientUnr;
+  const totalPnl = capital0Kpi > 0 ? portDelta : realPnl + clientUnr;
   const unrPnl = totalPnl - realPnl;
 
   // Hero portfolio
@@ -966,7 +969,8 @@ function setPieSlide(idx) {
 
 function computeDonutItems(scope) {
   const motorStateArr = state.motorStateArr || [];
-  const cap = cfg.capitalUsd || 10000;
+  // Fix 2026-04-23: usar portfolio total real en lugar de cfg.capitalUsd (que era 10000 hardcoded)
+  const cap = (scope === 'total' && state.portfolioTotal > 0) ? state.portfolioTotal : (cfg.capitalUsd || 10000);
   const items = [];
   const colorMap = {};
   let deployed = 0;
@@ -1142,6 +1146,12 @@ function renderMotors(allRows, motorStateArr) {
     const allocPct = cap > 0 ? Math.min(100, (allocated / cap) * 100) : 0;
     const depPct   = cap > 0 ? Math.min(100, (deployed  / cap) * 100) : 0;
 
+    // Fix 2026-04-23: capital reservado para motores stub (M3/M4) según RISK_ON 10k
+    const STUB_ALLOC_PCT = { perp_grid: 0.20, funding_arb: 0.15 };
+    const totalCapFull   = state.totalCapital || cap;
+    const stubReserved   = !isActive && STUB_ALLOC_PCT[m.id] ? STUB_ALLOC_PCT[m.id] * totalCapFull : 0;
+    const stubResPct     = totalCapFull > 0 ? Math.min(100, (stubReserved / totalCapFull) * 100) : 0;
+
     const headHtml = `
       <div class="motor-row-head">
         <div class="motor-info">
@@ -1157,6 +1167,13 @@ function renderMotors(allRows, motorStateArr) {
               <span class="mal-sep">·</span>
               <span class="mal-dot mal-dot-dep"></span><span>${fmtMoneyCompact(deployed)} deployed</span>
             </div>
+          ` : stubReserved > 0 ? `
+            <div class="motor-alloc-bar" title="Capital reservado (motor en preparación)" style="opacity:0.45">
+              <div class="mab-alloc" style="width:${stubResPct}%"></div>
+            </div>
+            <div class="motor-alloc-legend" style="opacity:0.55">
+              <span class="mal-dot mal-dot-alloc"></span><span>${fmtMoneyCompact(stubReserved)} reservado · parked</span>
+            </div>
           ` : ''}
         </div>
         <div class="motor-meta">
@@ -1167,6 +1184,8 @@ function renderMotors(allRows, motorStateArr) {
           ${isActive ? `
             <span class="motor-alloc-str">${m.id === 'spot_grid' ? (row.open_positions || 0) : syms.length} posiciones</span>
             <span class="motor-pnl-str ${clsFor(pnl)}">PnL ${fmtMoney(pnl, true)}</span>
+          ` : stubReserved > 0 ? `
+            <span class="motor-alloc-str" style="opacity:0.5">${(STUB_ALLOC_PCT[m.id]*100).toFixed(0)}% capital</span>
           ` : ''}
         </div>
       </div>`;
