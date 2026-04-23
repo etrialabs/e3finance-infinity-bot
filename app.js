@@ -367,11 +367,15 @@ function renderKPIs(clientUnrealizedPnl) {
   const portfolio   = (bm_equity > 0 && capital0Kpi > 0) ? bm_equity : cap + (realPnl + (clientUnrealizedPnl ?? 0));
   const portDelta   = capital0Kpi > 0 ? portfolio - capital0Kpi : realPnl + (clientUnrealizedPnl ?? 0);
 
-  // No Realizado: derivar del portDelta cuando hay BENCHMARK (clientUnrealizedPnl es incompleto — solo captura posiciones abiertas actuales)
-  const unrPnl   = (bm_equity > 0 && capital0Kpi > 0) ? portDelta - realPnl
-                 : (clientUnrealizedPnl !== undefined)  ? clientUnrealizedPnl
-                 : parseFloat(latest?.unrealized_pnl_usd || 0);
-  const totalPnl = realPnl + unrPnl;
+  // P&L total: BENCHMARK es canónico — portDelta ya es la diferencia real vs capital_0
+  // clientUnrealizedPnl es incompleto (solo posiciones abiertas live, no captura el total)
+  const clientUnr = clientUnrealizedPnl !== undefined
+    ? clientUnrealizedPnl
+    : parseFloat(latest?.unrealized_pnl_usd || 0);
+  const totalPnl = (portfolio === bm_equity && capital0Kpi > 0)
+    ? portDelta
+    : realPnl + clientUnr;
+  const unrPnl = totalPnl - realPnl;
 
   // Hero portfolio
   document.getElementById('kpi-portfolio').textContent = fmtMoney(portfolio);
@@ -430,9 +434,10 @@ function renderKPIs(clientUnrealizedPnl) {
   document.getElementById('kpi-tier-label').textContent = latest?.tier || '—';
   document.getElementById('kpi-positions').textContent = latest?.open_positions ?? '—';
 
-  // PnL split
-  const realPct = cap > 0 ? (realPnl / cap) * 100 : 0;
-  const unrPct  = cap > 0 ? (unrPnl  / cap) * 100 : 0;
+  // PnL split — usar capital0Kpi como base si disponible (coherente con portPct)
+  const pnlBase  = capital0Kpi > 0 ? capital0Kpi : cap;
+  const realPct  = pnlBase > 0 ? (realPnl / pnlBase) * 100 : 0;
+  const unrPct   = pnlBase > 0 ? (unrPnl  / pnlBase) * 100 : 0;
 
   const pnlUnrPct = document.getElementById('kpi-pnl-unr-pct');
   pnlUnrPct.textContent = latest ? fmtPct(unrPct, true) : '—';
