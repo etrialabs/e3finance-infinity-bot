@@ -1337,6 +1337,7 @@ function renderCycleHistory(rows) {
 // BENCHMARK KPIs — strip de 5 cards
 // ─────────────────────────────────────────
 function renderBenchmarkKPIs() {
+  return; // Strip eliminado del dashboard — datos ya presentes en hero y benchmark KPIs
   const strip = document.getElementById('bm-strip');
   if (!strip) return;
 
